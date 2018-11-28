@@ -13,6 +13,13 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
 var options = function options(validate) {
   return {
+    /** isEmail method: 
+     * @description check if the string is a valid email
+     * optional: supply name of key in body
+     * optional: supply variable for message contruction
+     * @param  {string} name
+     * @param  {string} variable,
+     */
     isEmail: function isEmail() {
       var name = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'email';
       var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : name;
@@ -49,6 +56,51 @@ var options = function options(validate) {
       checkTypeOf(validate.req.body[item], 'string', "".concat(variable, " must be a string"), validate);
       return options(validate);
     },
+    isPassword: function isPassword(item) {
+      var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : item;
+      var length = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 4;
+      var hasUpper = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+      var hasNumber = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
+      var hasSpecial = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
+      var upper = /[A-Z]/g;
+      var num = /[0-9]/g;
+      var special = /[!@#$%^&*(),.?":{}|<>]/g;
+      checkAndPush(validate.req.body[item] && validate.req.body[item].length < length, "".concat(variable, " must have a minimum length of ").concat(length), validate);
+
+      if (hasUpper) {
+        checkAndPush(validate.req.body[item] && !upper.test(validate.req.body[item]), "".concat(variable, " must have contain an uppercase letter"), validate);
+      }
+
+      if (hasNumber) {
+        checkAndPush(validate.req.body[item] && !num.test(validate.req.body[item]), "".concat(variable, " must have contain a number"), validate);
+      }
+
+      if (hasSpecial) {
+        checkAndPush(validate.req.body[item] && !special.test(validate.req.body[item]), "".concat(variable, " must have contain an special character"), validate);
+      }
+
+      return options(validate);
+    },
+    isPhoneNumber: function isPhoneNumber(item) {
+      var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : item;
+      var length = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 11;
+      var pattern = "^(([+]{1}[0-9]{2}|0)[0-9]{".concat(length - 1, "})$");
+      var phone = new RegExp(pattern, 'g');
+      checkAndPush(validate.req.body[item] && !phone.test(validate.req.body[item]), "".concat(variable, " must be a valid phone number"), validate);
+      return options(validate);
+    },
+    isDateFormat: function isDateFormat(item) {
+      var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : item;
+      var date = /^((0?[13578]|10|12)(-|\/)(([1-9])|(0[1-9])|([12])([0-9]?)|(3[01]?))(-|\/)((19)([2-9])(\d{1})|(20)([01])(\d{1})|([8901])(\d{1}))|(0?[2469]|11)(-|\/)(([1-9])|(0[1-9])|([12])([0-9]?)|(3[0]?))(-|\/)((19)([2-9])(\d{1})|(20)([01])(\d{1})|([8901])(\d{1})))$/g;
+      checkAndPush(validate.req.body[item] && !date.test(validate.req.body[item]), "".concat(variable, " must be a valid date"), validate);
+      return options(validate);
+    },
+    isUrl: function isUrl(item) {
+      var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : item;
+      var url = /(http[s]?:\/\/)?[^\s(["<,>]*\.[^\s[",><]*/igm;
+      checkAndPush(validate.req.body[item] && !url.test(validate.req.body[item]), "".concat(variable, " must be a valid URL"), validate);
+      return options(validate);
+    },
     isDate: function isDate(item) {
       var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : item;
       var date = new Date(validate.req.body[item]);
@@ -58,22 +110,7 @@ var options = function options(validate) {
     isDatePast: function isDatePast(date) {
       var variable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : date;
       var compare = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : new Date();
-      var checkDate = new Date(validate.req.body[date]);
-      var today = new Date(compare);
-      var message = "".concat(variable, " is an invalid date. Must not be later than ").concat(today.toDateString());
-      checkDate.setUTCHours(0);
-      checkDate.setUTCMinutes(0);
-      checkDate.setUTCSeconds(0);
-      checkDate.setUTCMilliseconds(0);
-      today.setUTCHours(0);
-      today.setUTCMinutes(0);
-      today.setUTCSeconds(0);
-      today.setUTCMilliseconds(0);
-
-      if (checkDate < today) {
-        validate.errors.push(message);
-      }
-
+      checkPast(date, compare, variable, validate, true);
       return options(validate);
     },
     isDateFuture: function isDateFuture(date) {
@@ -119,7 +156,8 @@ var checkAndPush = function checkAndPush(condition, message, validate) {
   }
 };
 
-var checkPast = function checkPast(date, compare, variable, validate, check) {
+var checkPast = function checkPast(date, compare, variable, validate) {
+  var check = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
   var checkDate = new Date(validate.req.body[date]);
   var today = new Date(compare);
   var message = check ? "".concat(variable, " is an invalid date. Must not be later than ").concat(today.toDateString()) : "".concat(variable, " is an invalid date. Must not be further than ").concat(today.toDateString());
